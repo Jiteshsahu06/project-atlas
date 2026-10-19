@@ -1,0 +1,213 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Project Atlas | Market Research Assistant</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; font-family: Arial, sans-serif;
+      background: #f5f8fc; color: #14213d;
+      display: flex; min-height: 100vh;
+    }
+    aside {
+      width: 235px; background: white; padding: 25px 18px;
+      border-right: 1px solid #dce5f0;
+      display: flex; flex-direction: column;
+    }
+    .brand { font-size: 23px; font-weight: bold; margin-bottom: 35px; }
+    .brand small { display: block; font-size: 13px; color: #718096; margin-top: 8px; }
+    nav a {
+      display: block; padding: 14px; margin: 6px 0;
+      text-decoration: none; color: #30415f; border-radius: 10px;
+    }
+    nav a:first-child { background: #e5f0ff; color: #1464d8; }
+    .status { margin-top: auto; padding: 14px; border: 1px solid #dce5f0; border-radius: 12px; }
+    main { flex: 1; min-width: 0; }
+    header {
+      background: white; padding: 22px 28px;
+      border-bottom: 1px solid #dce5f0;
+      display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+    }
+    header h2 { margin: 0 0 7px; }
+    .muted { color: #718096; }
+    select, input, button { font: inherit; }
+    select { padding: 10px; border: 1px solid #dce5f0; border-radius: 9px; }
+    .content { max-width: 1000px; margin: auto; padding: 30px 22px; }
+    .welcome { text-align: center; margin-bottom: 25px; }
+    .welcome h1 { font-size: 30px; margin-bottom: 10px; }
+    .suggestions { display: flex; gap: 12px; margin-bottom: 28px; }
+    .suggestions button {
+      flex: 1; padding: 16px; background: white;
+      border: 1px solid #dce5f0; border-radius: 12px;
+      cursor: pointer; color: #203553;
+    }
+    #messages { display: flex; flex-direction: column; gap: 16px; }
+    .bubble {
+      max-width: 85%; padding: 16px 18px; border-radius: 14px;
+      line-height: 1.6; overflow-wrap: anywhere;
+    }
+    .user { align-self: flex-end; background: #dfedff; }
+    .assistant { align-self: flex-start; background: white; border: 1px solid #dce5f0; }
+    .composer {
+      margin-top: 25px; padding: 14px; background: white;
+      border: 1px solid #dce5f0; border-radius: 14px;
+    }
+    .compose-row { display: flex; gap: 10px; }
+    input {
+      flex: 1; min-width: 0; padding: 14px;
+      border: 1px solid #dce5f0; border-radius: 9px;
+    }
+    #send {
+      border: 0; border-radius: 9px; padding: 0 22px;
+      color: white; background: #2785df; cursor: pointer;
+    }
+    .note { font-size: 13px; color: #718096; margin: 12px 4px 0; }
+    @media (max-width: 700px) {
+      aside { width: 155px; padding: 15px 8px; }
+      .suggestions { flex-direction: column; }
+      .content { padding: 20px 12px; }
+      .bubble { max-width: 95%; }
+    }
+  </style>
+</head>
+<body>
+  <aside>
+    <div class="brand">◉ Project Atlas
+      <small>Generative AI for Market Research</small>
+    </div>
+    <nav>
+      <a href="#">💬 Chat</a>
+      <a href="#reports">📄 Reports</a>
+      <a href="#escalations">⚠ Escalations</a>
+      <a href="#evaluations">▥ Evaluations</a>
+      <a href="#settings">⚙ Settings</a>
+    </nav>
+    <div class="status">🟢 API status<br><small class="muted">FastAPI · Local</small></div>
+  </aside>
+
+  <main>
+    <header>
+      <div>
+        <h2>Market Research Assistant</h2>
+        <span class="muted">Answers grounded in licensed market reports</span>
+      </div>
+      <label>Client:
+        <select id="client">
+          <option value="C-01">C-01</option>
+          <option value="C-02">C-02</option>
+        </select>
+      </label>
+    </header>
+
+    <section class="content">
+      <div class="welcome">
+        <h1>☀️ Hello, Jitesh</h1>
+        <p class="muted">Ask a question about your authorized market reports.</p>
+      </div>
+
+      <div class="suggestions">
+        <button data-question="Compare market revenue reports">📊 Compare market revenue</button>
+        <button data-question="Summarize APAC market share">🌐 Summarize APAC share</button>
+        <button data-question="Calculate CAGR">🧮 Calculate CAGR</button>
+      </div>
+
+      <div id="messages" aria-live="polite">
+        <div class="bubble assistant">Welcome! Ask a question about your market reports.</div>
+      </div>
+
+      <form class="composer" id="chat-form">
+        <div class="compose-row">
+          <input id="question" maxlength="5000" placeholder="Ask about revenue, CAGR, region, or report scope..." required>
+          <button id="send" type="submit">➤</button>
+        </div>
+        <p class="note">Responses should be limited to reports your client is licensed to access.</p>
+      </form>
+    </section>
+  </main>
+
+  
+<script>
+  const form = document.getElementById("chat-form");
+  const questionInput = document.getElementById("question");
+  const messages = document.getElementById("messages");
+  const sendButton = document.getElementById("send");
+  const clientSelect = document.getElementById("client");
+
+  function addMessage(text, type) {
+    const bubble = document.createElement("div");
+    bubble.className = "bubble " + type;
+    bubble.textContent = text;
+    messages.appendChild(bubble);
+    bubble.scrollIntoView({ behavior: "smooth", block: "end" });
+  }
+
+  document.querySelectorAll("[data-question]").forEach(button => {
+    button.addEventListener("click", () => {
+      questionInput.value = button.dataset.question;
+      questionInput.focus();
+    });
+  });
+
+  form.addEventListener("submit", async event => {
+    event.preventDefault();
+
+    const message = questionInput.value.trim();
+    if (!message) return;
+
+    const clientId = clientSelect.value;
+
+    addMessage(message, "user");
+    questionInput.value = "";
+    sendButton.disabled = true;
+    sendButton.textContent = "...";
+
+    try {
+      const response = await fetch("http://127.0.0.1:8000/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          client_id: clientId,
+          message: message
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.detail || "Request failed");
+      }
+
+      let answer = data.answer || "No answer returned.";
+
+      if (data.category) {
+        answer += "\nCategory: " + data.category;
+      }
+
+      if (data.confidence !== undefined) {
+        answer += "\nConfidence: " +
+          Math.round(data.confidence * 100) + "%";
+      }
+
+      if (data.escalation_id) {
+        answer += "\nEscalation ID: " + data.escalation_id;
+      }
+
+      addMessage(answer, "assistant");
+
+    } catch (error) {
+      console.error("Chat request failed:", error);
+      addMessage(
+        "Could not connect to the API. " + error.message,
+        "assistant"
+      );
+    } finally {
+      sendButton.disabled = false;
+      sendButton.textContent = "➤";
+    }
+  });
+</script>
